@@ -47,11 +47,11 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
     if peers.connections > 0 {
         log.Println("initalizing....")
         //let peer know they are ready 
-        conn.WriteMessage(websocket.TextMessage, []byte("{\"type\":\"ready\"}"))
         //reciving sdp info
         //note most cases would use json here as its more flexable
         //broadcast
         for i:=0; i<peers.connections; i++ {
+            conn.WriteMessage(websocket.TextMessage, []byte("{\"type\":\"ready\"}"))
             _, sdp , _ := conn.ReadMessage()
             //sends offer
             peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(string(sdp)))
@@ -60,17 +60,23 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
             for {
             _, ice, _ := conn.ReadMessage()
                 if (string(ice)=="done"){
+                    log.Println("Done")
+                    <-ch
                     break
-                }
-                peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(string(ice)))
-                conn.WriteMessage(websocket.TextMessage, []byte(string(<-ch)))
-            }
+                } else {
 
+                    peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(string(ice)))
+                    conn.WriteMessage(websocket.TextMessage, []byte(string(<-ch)))
+                }
+                log.Println("REEE")
+            }
+            log.Println("REEE")
         }
         
     }
     peers.oldPeers[peers.connections] = conn
     peers.connections++
+    log.Println("conns ",peers.connections)
     peers.newPeer.Unlock()
 
     for {

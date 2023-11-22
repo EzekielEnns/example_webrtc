@@ -4,7 +4,8 @@
  * @property {string} value - value for message
  * @property {boolean} offer - if true is a offer if false is a anwser
  */
-
+//TODO fix  DOMException: No remoteDescription.
+    //TODO Uncaught (in promise) SyntaxError: JSON.parse: unexpected character at line 1 column 1 of the JSON data
 /*
  * initalize connection to singalling server
  *     handle messages from server
@@ -27,6 +28,7 @@ var index = 0;
 
 singalling.addEventListener("message", async function(event){
     console.log(event.data)
+    //check for done
     let data = JSON.parse(event.data)
     console.log(data)
 
