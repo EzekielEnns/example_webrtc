@@ -1,7 +1,8 @@
 package main
 
 import (
-	"fmt"
+//	"fmt"
+	"log"
 	"net/http"
 	"sync"
 
@@ -44,29 +45,29 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
     
     peers.newPeer.Lock()
     if peers.connections > 0 {
+        log.Println("initalizing....")
         //let peer know they are ready 
         conn.WriteMessage(websocket.TextMessage, []byte("{\"type\":\"ready\"}"))
         //reciving sdp info
         //note most cases would use json here as its more flexable
         //broadcast
-        for _,oldPeer := range peers.oldPeers{
+        for i:=0; i<peers.connections; i++ {
             _, sdp , _ := conn.ReadMessage()
-            oldPeer.WriteMessage(websocket.TextMessage, []byte(
-                fmt.Sprintf("{\"type\":\"sdp\",\"value\":\"%s\"}", sdp)))
-            //wait on old peer to send sdp back
-            conn.WriteMessage(websocket.TextMessage, []byte(
-                fmt.Sprintf("{\"type\":\"sdp\",\"value\":\"%s\"}", <-ch)))
+            //sends offer
+            peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(string(sdp)))
+            //sends back awnser
+            conn.WriteMessage(websocket.TextMessage, []byte(string(<-ch)))
+            for {
+            _, ice, _ := conn.ReadMessage()
+                if (string(ice)=="done"){
+                    break
+                }
+                peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(string(ice)))
+                conn.WriteMessage(websocket.TextMessage, []byte(string(<-ch)))
+            }
+
         }
         
-        conn.WriteMessage(websocket.TextMessage, []byte("{\"type\":\"establish\"}"))
-        for _,oldPeer := range peers.oldPeers{
-            _, ice, _ := conn.ReadMessage()
-            oldPeer.WriteMessage(websocket.TextMessage, []byte(
-                fmt.Sprintf("{\"type\":\"ice\",\"value\":\"%s\"}", ice)))
-            //wait on old peer to send sdp back
-            conn.WriteMessage(websocket.TextMessage, []byte(
-                fmt.Sprintf("{\"type\":\"ice\",\"value\":\"%s\"}", <-ch)))
-        }
     }
     peers.oldPeers[peers.connections] = conn
     peers.connections++
@@ -77,6 +78,8 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
             return
         }
         _,msg,_ := conn.ReadMessage()
+        log.Println("got msg")
+        log.Println(string(msg))
         ch <- string(msg)
     }
 }

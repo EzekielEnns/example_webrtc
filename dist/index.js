@@ -10,7 +10,6 @@
  *     handle messages from server
  * */
 
-const stream = await navigator.mediaDevices.getDisplayMedia()
 //connect to singalling server
 const singalling = new WebSocket("ws://localhost:8080/ws");
 //TODO init peers
@@ -18,38 +17,41 @@ const singalling = new WebSocket("ws://localhost:8080/ws");
 /**
  * @type {Array<RTCPeerConnection>}
  */
-const peers = []    //TODO fill array
+const peers = Array.from({length:5}, createPeer)
 
 /**
  * a peer tobe added to peers
  * @type {number}
  */
-var index;
+var index = 0;
 
 singalling.addEventListener("message", async function(event){
-    /**
-     * @type {Msg}
-     */
-    const data = JSON.parse(event.data)
+    console.log(event.data)
+    let data = JSON.parse(event.data)
+    console.log(data)
 
     switch (data.type){
         case "ready":
             const offer = await peers[index].createOffer()
             await peers[index].setLocalDescription(offer)
-            singalling.send(offer.sdp)
+            console.log(offer)
+            singalling.send(JSON.stringify( peers[index].localDescription ))
             break;
         case "offer":
-            await peers[index].setRemoteDescription(data.value)
+            console.log("offer")
+            await peers[index].setRemoteDescription(data)
             const awnser = await peers[index].createAnswer()
-            singalling.send(awnser.sdp)
+            await peers[index].setLocalDescription(awnser)
+            singalling.send(JSON.stringify( peers[index].localDescription))
             break;
-        case "awnser":
-            await peers[index].setRemoteDescription(data.value)
+        case "answer":
+            console.log("answer")
+            console.log(data)
+            await peers[index].setRemoteDescription(data)
             break;
-        case "ice":
-            peers[index].addIceCandidate(data.value)
-            singalling.send("done")
-            index++;
+        default:
+            console.log("ice")
+            peers[index].addIceCandidate(data)
             break;
     }
 })
@@ -61,21 +63,25 @@ function createPeer(){
     let peer = new RTCPeerConnection({
         iceServers: [{ urls: "stun:stun.l.google.com:19302"}]
     })
-    peer.addTrack(stream.getTracks()[0], stream);
+    peer.createDataChannel("text").addEventListener('message',e => {
+        console.log(e.data)
+    })
     peer.addEventListener("icecandidate", function(event) {
-        singalling.send(JSON.stringify(event.candidate))
+        console.log("ICEEEEEE")
+        console.log(event)
+        if (event.candidate) {
+            singalling.send(JSON.stringify(event.candidate))
+        }
     });
-    peer.addEventListener("iceconnectionstatechange", function() {
+    peer.addEventListener("iceconnectionstatechange", function(e) {
+        console.log(e)
+        console.log(peer.iceConnectionState)
         if (peer.iceConnectionState === "connected") {
             singalling.send("done")
             index++
         }
     });
-    peer.addEventListener("track", function(event) {
-        //add track to videos
-        // const video = document.getElementById("video") as HTMLVideoElement;
-        // video.srcObject = event.streams[0];
-    });
+    return peer
 }
 
 /*
