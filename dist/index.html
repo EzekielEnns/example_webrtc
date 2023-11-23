@@ -1,7 +1,26 @@
 <html>
   <div>
-    <h1>Go websockets TODO example</h1>
-    <p>lets test her out</p>
+
+    <div class="messagebox" id="receivebox">
+      <p>Messages received:</p>
+    </div>
+    <div class="messagebox">
+      <label for="message"
+        >Enter a message:
+        <input
+          type="text"
+          name="message"
+          id="message"
+          placeholder="Message text"
+          inputmode="latin"
+          size="60"
+          maxlength="120"
+          disabled />
+      </label>
+      <button id="sendButton" name="sendButton" class="buttonright" disabled>
+        Send
+      </button>
+</div>
   </div>
   <script src="./index.js"></script>
 </html>

@@ -18,7 +18,8 @@ const singalling = new WebSocket("ws://localhost:8080/ws");
 /**
  * @type {Array<RTCPeerConnection>}
  */
-const peers = Array.from({length:5}, createPeer)
+const peers = Array.from({length:4}, createPeer)
+//5 connections each peer is connected to another peer ecluding itself
 
 /**
  * a peer tobe added to peers
@@ -52,8 +53,12 @@ singalling.addEventListener("message", async function(event){
             await peers[index].setRemoteDescription(data)
             break;
         default:
-            console.log("ice")
-            peers[index].addIceCandidate(data)
+            console.log("default")
+            if (data.candidate){
+                console.log("ice")
+                console.log(data)
+                peers[index].addIceCandidate(data)
+            }
             break;
     }
 })
@@ -69,8 +74,7 @@ function createPeer(){
         console.log(e.data)
     })
     peer.addEventListener("icecandidate", function(event) {
-        console.log("ICEEEEEE")
-        console.log(event)
+        console.log("Got candidate:::::",event)
         if (event.candidate) {
             singalling.send(JSON.stringify(event.candidate))
         }
@@ -80,7 +84,13 @@ function createPeer(){
         console.log(peer.iceConnectionState)
         if (peer.iceConnectionState === "connected") {
             singalling.send("done")
-            index++
+            if(index >= peers.length){
+                console.log("closed")
+                singalling.close()
+            }
+            else {
+                index++
+            }
         }
     });
     return peer

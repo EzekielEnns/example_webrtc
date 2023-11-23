@@ -1,9 +1,10 @@
 package main
 
 import (
-//	"fmt"
+	//	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -39,7 +40,8 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
     //defers the call of conn close once this func ends
     defer conn.Close()
 
-    if peers.connections >= MAX_CONN-1 {
+    if peers.connections >= MAX_CONN {
+        log.Println("BYE")
         return
     }
     
@@ -60,17 +62,15 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
             for {
             _, ice, _ := conn.ReadMessage()
                 if (string(ice)=="done"){
-                    log.Println("Done")
-                    <-ch
+                    log.Println("New peer done")
                     break
                 } else {
 
                     peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(string(ice)))
                     conn.WriteMessage(websocket.TextMessage, []byte(string(<-ch)))
                 }
-                log.Println("REEE")
             }
-            log.Println("REEE")
+            log.Println("next peer ",i)
         }
         
     }
@@ -80,12 +80,19 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
     peers.newPeer.Unlock()
 
     for {
-        if peers.connections == MAX_CONN-1 {
+        if peers.connections == MAX_CONN {
+            log.Println("Closing")
             return
         }
         _,msg,_ := conn.ReadMessage()
-        log.Println("got msg")
         log.Println(string(msg))
-        ch <- string(msg)
+        str := string(msg)
+        if (strings.Contains(str,`candidate":"",`)){
+            log.Println("skipped bad ice")
+            continue
+        }
+        if (str != "done") {
+            ch <- str
+        }
     }
 }
