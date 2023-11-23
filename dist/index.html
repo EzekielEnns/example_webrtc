@@ -1,26 +1,14 @@
 <html>
-  <div>
-
-    <div class="messagebox" id="receivebox">
-      <p>Messages received:</p>
-    </div>
-    <div class="messagebox">
-      <label for="message"
-        >Enter a message:
-        <input
-          type="text"
-          name="message"
-          id="message"
-          placeholder="Message text"
-          inputmode="latin"
-          size="60"
-          maxlength="120"
-          disabled />
-      </label>
-      <button id="sendButton" name="sendButton" class="buttonright" disabled>
-        Send
-      </button>
-</div>
+  <div id="output">
+    <p>Messages received:</p>
   </div>
+  <label for="message">Enter a message:
+      <input type="text" name="message" id="input" placeholder="Message text" 
+              inputmode="latin" size=60 maxlength=120>
+  </label>
+  <button id="send" name="sendButton" class="buttonright" >
+    Send
+  </button>
+  <p id="status">Log</p>
   <script src="./index.js"></script>
 </html>
