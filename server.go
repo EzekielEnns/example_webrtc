@@ -2,7 +2,7 @@ package main
 
 import (
 	//	"fmt"
-	"log"
+	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -30,6 +30,7 @@ func main() {
     //spins up a new "thread" (goroutine) where handleSignaling() is run on new connection
     http.HandleFunc("/ws", handleSignaling)
 
+    fmt.Println("http://localhost:8080")
     //listen for requests to spin "threads" up
 	http.ListenAndServe(":8080", nil)
 }
@@ -41,17 +42,12 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
     defer conn.Close()
 
     if peers.connections >= MAX_CONN {
-        log.Println("BYE")
         return
     }
     
     peers.newPeer.Lock()
     if peers.connections > 0 {
-        log.Println("initalizing....")
-        //let peer know they are ready 
-        //reciving sdp info
-        //note most cases would use json here as its more flexable
-        //broadcast
+        //broad cast
         for i:=0; i<peers.connections; i++ {
             conn.WriteMessage(websocket.TextMessage, []byte("{\"type\":\"ready\"}"))
             _, sdp , _ := conn.ReadMessage()
@@ -62,7 +58,6 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
             for {
             _, ice, _ := conn.ReadMessage()
                 if (string(ice)=="done"){
-                    log.Println("New peer done")
                     break
                 } else {
 
@@ -70,25 +65,20 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
                     conn.WriteMessage(websocket.TextMessage, []byte(string(<-ch)))
                 }
             }
-            log.Println("next peer ",i)
         }
         
     }
     peers.oldPeers[peers.connections] = conn
     peers.connections++
-    log.Println("conns ",peers.connections)
     peers.newPeer.Unlock()
 
     for {
         if peers.connections == MAX_CONN {
-            log.Println("Closing")
             return
         }
         _,msg,_ := conn.ReadMessage()
-        log.Println(string(msg))
         str := string(msg)
         if (strings.Contains(str,`candidate":"",`)){
-            log.Println("skipped bad ice")
             continue
         }
         if (str != "done") {

@@ -16,6 +16,8 @@ const output = document.getElementById("output");
  */
 const log = document.getElementById("status");
 
+var color = "red"
+
 /**
  * @type {Array<RTCDataChannel>}
  */
@@ -101,15 +103,14 @@ function createPeer() {
   //setting up remote channel
   peer.addEventListener("datachannel", function ({ channel }) {
     channel.addEventListener("message", function (e) {
-        console.log("CHANNEL DATA")
-        console.log(e)
-        console.log(e.data)
+      let [cl,data] = e.data.split("~")
       let el = document.createElement("p");
-      let txt = document.createTextNode(e.data);
+      el.classList.add(`text-${cl}-700`)
+      let txt = document.createTextNode(data);
       el.appendChild(txt);
       output.appendChild(el);
     });
-    
+   
     channel.addEventListener("open", ()=>{
         log.textContent = `opened local`;console.log("opened channel")});
     channel.addEventListener("close", ()=>{
@@ -121,9 +122,27 @@ function createPeer() {
 document.getElementById("send").addEventListener("click", function () {
   for (let ch of channels) {
     if (ch.readyState == "open"){
-        ch.send(input.value);
+        ch.send(`${color}~${input.value}`);
     }
   }
+
+    let el = document.createElement("p");
+    el.classList.add(`text-${color}-700`)
+    let txt = document.createTextNode(input.value);
+    el.appendChild(txt);
+    output.appendChild(el);
     input.value = "";
     input.focus();
 });
+
+
+document.querySelectorAll('.MySel').forEach((e)=>{
+    e.onclick = ()=>{
+        document.querySelectorAll('.MySel').forEach((el)=>{
+            el.classList.remove("border-2")
+        })
+        e.classList.toggle("border-2")
+        console.log(e.id)
+        color = e.id
+    }
+})

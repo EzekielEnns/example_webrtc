@@ -1,14 +1,30 @@
+<!doctype html>
 <html>
-  <div id="output">
-    <p>Messages received:</p>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex-col p-1">
+  <div id="output" class="flex gap-4 w-full overflow-scroll">
+    <p>Messages:</p>
   </div>
-  <label for="message">Enter a message:
-      <input type="text" name="message" id="input" placeholder="Message text" 
+  <div class="flex">
+      <input class="w-1/2" type="text" name="message" id="input" placeholder="Enter Msg" 
               inputmode="latin" size=60 maxlength=120>
-  </label>
-  <button id="send" name="sendButton" class="buttonright" >
-    Send
-  </button>
-  <p id="status">Log</p>
+      <button id="send" name="sendButton" class="border-2 border-black rounded-lg p-1" >
+        Send
+      </button>
+      <div id="red" class="MySel bg-red-200 w-7 m-1 border-2 border-black"></div>
+      <div id="green" class="MySel bg-green-200 w-7 m-1 border-black"></div>
+      <div id="blue" class="MySel bg-blue-200 w-7 m-1 border-black"></div>
+      <div id="yellow" class="MySel bg-yellow-200 w-7 m-1 border-black"></div>
+      <div id="purple" class="MySel bg-purple-200 w-7 m-1 border-black"></div>
+  </div>
+
+  <div id="status" class="flex gap-4 w-full overflow-auto">
+    <p>Log:</p>
+  </div>
   <script src="./index.js"></script>
+</body>
 </html>
