@@ -53,18 +53,23 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
             conn.WriteMessage(websocket.TextMessage, []byte("{\"type\":\"ready\"}"))
             _, sdp , _ := conn.ReadMessage()
             //sends offer
-            peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(string(sdp)))
+
+            str := strings.Split(string(sdp), "?")
+
+            log.Println("#########################Offer sent")
+            log.Println("::::::::::::::::::::::::newPeer\n",string(sdp))
+            peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(str[0]))
             //sends back awnser
             noAwnser := true
-            log.Println("LOOKING FOR ANWSER#########################")
+            log.Println("#########################WAITING for anwser")
             for noAwnser {
                 _,anwser,_ := peers.oldPeers[i].ReadMessage()
-                str := string(anwser)
-                log.Println("::::::::::::::::::::::::anwser\n",string(anwser))
-                conn.WriteMessage(websocket.TextMessage, []byte(string(anwser)))
-                if strings.Contains(str,`"type":"answer"`) {
+                str := strings.Split(string(anwser), "?")
+                log.Println("::::::::::::::::::::::::oldpeer\n",string(anwser))
+                conn.WriteMessage(websocket.TextMessage, []byte(str[0]))
+                if strings.Contains(str[0],`"type":"answer"`) {
                     
-                log.Println("got it#########################")
+                log.Println("#########################ICE stage")
                     noAwnser = false
                 }
             }
@@ -72,17 +77,20 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
             for !(newPeerState && oldPeerState){
                 if (!newPeerState){
                     _, ice, _ := conn.ReadMessage()
-                    if (string(ice)!="done"){
-                        peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(string(ice)))
+                    str := strings.Split(string(ice),"?")
+                    log.Println("::::::::::::::::::::::::newPeer\n",string(ice))
+                    if (str[0]!="done"){
+                        peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(str[0]))
                     } else {
                         newPeerState = true
                     }
                 }
                 if (!oldPeerState) {
                     _,ice,_ := peers.oldPeers[i].ReadMessage()
+                    str := strings.Split(string(ice),"?")
                     log.Println("::::::::::::::::::::::::OldPeer\n",string(ice))
-                    if (string(ice)!="done"){
-                        conn.WriteMessage(websocket.TextMessage, []byte(string(ice)))
+                    if (str[0]!="done"){
+                        conn.WriteMessage(websocket.TextMessage, []byte(str[0]))
                     }else {
                         oldPeerState = true
                     }
