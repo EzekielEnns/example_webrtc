@@ -51,51 +51,75 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
         //broad cast
         for i:=0; i<peers.connections; i++ {
             conn.WriteMessage(websocket.TextMessage, []byte("{\"type\":\"ready\"}"))
-            _, sdp , _ := conn.ReadMessage()
-            //sends offer
-
-            str := strings.Split(string(sdp), "?")
-
-            log.Println("#########################Offer sent")
-            log.Println("::::::::::::::::::::::::newPeer\n",string(sdp))
-            peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(str[0]))
-            //sends back awnser
-            noAwnser := true
-            log.Println("#########################WAITING for anwser")
-            for noAwnser {
-                _,anwser,_ := peers.oldPeers[i].ReadMessage()
-                str := strings.Split(string(anwser), "?")
-                log.Println("::::::::::::::::::::::::oldpeer\n",string(anwser))
-                conn.WriteMessage(websocket.TextMessage, []byte(str[0]))
-                if strings.Contains(str[0],`"type":"answer"`) {
-                    
-                log.Println("#########################ICE stage")
-                    noAwnser = false
-                }
-            }
-            newPeerState, oldPeerState := false, false
-            for !(newPeerState && oldPeerState){
-                if (!newPeerState){
-                    _, ice, _ := conn.ReadMessage()
-                    str := strings.Split(string(ice),"?")
-                    log.Println("::::::::::::::::::::::::newPeer\n",string(ice))
+            newSig, oldSig := true,true
+            for newSig || oldSig {
+                if newSig {
+                    _,sig,_ := conn.ReadMessage()
+                     log.Println("::::::::::::::::::::::::newPeer\n",string(sig))
+                    str := strings.Split(string(sig), "?")
                     if (str[0]!="done"){
                         peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(str[0]))
                     } else {
-                        newPeerState = true
+                        newSig = false
                     }
                 }
-                if (!oldPeerState) {
-                    _,ice,_ := peers.oldPeers[i].ReadMessage()
-                    str := strings.Split(string(ice),"?")
-                    log.Println("::::::::::::::::::::::::OldPeer\n",string(ice))
+                if oldSig {
+                    _,sig,_ := peers.oldPeers[i].ReadMessage()
+                     log.Println("::::::::::::::::::::::::oldPeer\n",string(sig))
+                    str := strings.Split(string(sig), "?")
                     if (str[0]!="done"){
                         conn.WriteMessage(websocket.TextMessage, []byte(str[0]))
                     }else {
-                        oldPeerState = true
+                        oldSig = false
                     }
                 }
             }
+
+            // _, sdp , _ := conn.ReadMessage()
+            // //sends offer
+            //
+            // str := strings.Split(string(sdp), "?")
+            //
+            // log.Println("#########################Offer sent")
+            // log.Println("::::::::::::::::::::::::newPeer\n",string(sdp))
+            // peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(str[0]))
+            // //sends back awnser
+            // noAwnser := true
+            // log.Println("#########################WAITING for anwser")
+            // for noAwnser {
+            //     _,anwser,_ := peers.oldPeers[i].ReadMessage()
+            //     str := strings.Split(string(anwser), "?")
+            //     log.Println("::::::::::::::::::::::::oldpeer\n",string(anwser))
+            //     conn.WriteMessage(websocket.TextMessage, []byte(str[0]))
+            //     if strings.Contains(str[0],`"type":"answer"`) {
+            //        
+            //     log.Println("#########################ICE stage")
+            //         noAwnser = false
+            //     }
+            // }
+            // newPeerState, oldPeerState := false, false
+            // for !(newPeerState && oldPeerState){
+            //     if (!newPeerState){
+            //         _, ice, _ := conn.ReadMessage()
+            //         str := strings.Split(string(ice),"?")
+            //         log.Println("::::::::::::::::::::::::newPeer\n",string(ice))
+            //         if (str[0]!="done"){
+            //             peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(str[0]))
+            //         } else {
+            //             newPeerState = true
+            //         }
+            //     }
+            //     if (!oldPeerState) {
+            //         _,ice,_ := peers.oldPeers[i].ReadMessage()
+            //         str := strings.Split(string(ice),"?")
+            //         log.Println("::::::::::::::::::::::::OldPeer\n",string(ice))
+            //         if (str[0]!="done"){
+            //             conn.WriteMessage(websocket.TextMessage, []byte(str[0]))
+            //         }else {
+            //             oldPeerState = true
+            //         }
+            //     }
+            // }
         }
         
     }
