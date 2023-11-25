@@ -3,6 +3,7 @@ package main
 import (
 	//	"fmt"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -18,8 +19,8 @@ type Peers struct {
     connections int
 }
 
+
 var peers Peers
-var ch = make(chan string)
 const MAX_CONN = 5
 
 func main() {
@@ -54,35 +55,52 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
             //sends offer
             peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(string(sdp)))
             //sends back awnser
-            conn.WriteMessage(websocket.TextMessage, []byte(string(<-ch)))
-            for {
-            _, ice, _ := conn.ReadMessage()
-                if (string(ice)=="done"){
-                    break
-                } else {
-
-                    peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(string(ice)))
-                    conn.WriteMessage(websocket.TextMessage, []byte(string(<-ch)))
+            noAwnser := true
+            log.Println("LOOKING FOR ANWSER#########################")
+            for noAwnser {
+                _,anwser,_ := peers.oldPeers[i].ReadMessage()
+                str := string(anwser)
+                log.Println("::::::::::::::::::::::::anwser\n",string(anwser))
+                conn.WriteMessage(websocket.TextMessage, []byte(string(anwser)))
+                if strings.Contains(str,`"type":"answer"`) {
+                    
+                log.Println("got it#########################")
+                    noAwnser = false
+                }
+            }
+            newPeerState, oldPeerState := false, false
+            for !(newPeerState && oldPeerState){
+                if (!newPeerState){
+                    _, ice, _ := conn.ReadMessage()
+                    if (string(ice)!="done"){
+                        peers.oldPeers[i].WriteMessage(websocket.TextMessage, []byte(string(ice)))
+                    } else {
+                        newPeerState = true
+                    }
+                }
+                if (!oldPeerState) {
+                    _,ice,_ := peers.oldPeers[i].ReadMessage()
+                    log.Println("::::::::::::::::::::::::OldPeer\n",string(ice))
+                    if (string(ice)!="done"){
+                        conn.WriteMessage(websocket.TextMessage, []byte(string(ice)))
+                    }else {
+                        oldPeerState = true
+                    }
                 }
             }
         }
         
     }
+    log.Println("done")
     peers.oldPeers[peers.connections] = conn
+    log.Println(peers.connections)
     peers.connections++
     peers.newPeer.Unlock()
+    log.Println(peers.connections)
 
     for {
         if peers.connections == MAX_CONN {
             return
-        }
-        _,msg,_ := conn.ReadMessage()
-        str := string(msg)
-        if (strings.Contains(str,`candidate":"",`)){
-            continue
-        }
-        if (str != "done") {
-            ch <- str
         }
     }
 }

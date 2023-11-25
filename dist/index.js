@@ -46,14 +46,14 @@ singalling.addEventListener("message", async function (event) {
       const offer = await peers[index].createOffer();
       await peers[index].setLocalDescription(offer);
       console.log(offer);
-      singalling.send(JSON.stringify(peers[index].localDescription));
+      singalling.send(JSON.stringify(offer));
       break;
     case "offer":
       console.log("offer");
       await peers[index].setRemoteDescription(data);
       const awnser = await peers[index].createAnswer();
       await peers[index].setLocalDescription(awnser);
-      singalling.send(JSON.stringify(peers[index].localDescription));
+      singalling.send(JSON.stringify(awnser));
       break;
     case "answer":
       console.log("answer");
@@ -63,9 +63,19 @@ singalling.addEventListener("message", async function (event) {
     default:
       console.log("default");
       if (data.candidate) {
-        console.log("ice");
-        console.log(data);
-        peers[index].addIceCandidate(data);
+          try{
+
+            await peers[index].addIceCandidate(data);
+          }catch(e) {
+        console.log(":::::::::::::::::::::::::::::ice");
+                console.log(data);
+              console.log(peers[index])
+              console.log(peers[index].connectionState)
+              console.log(peers[index].iceGatheringState)
+              console.log(peers[index].iceConnectionState)
+              console.log(e)
+        console.log(":::::::::::::::::::::::::::::ice");
+          }
       }
       break;
   }
