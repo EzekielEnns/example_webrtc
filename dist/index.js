@@ -46,19 +46,20 @@ singalling.addEventListener("message", async function (event) {
       const offer = await peers[index].createOffer();
       await peers[index].setLocalDescription(offer);
       console.log(offer);
-      singalling.send(JSON.stringify(offer)+`?${index}`);
+      singalling.send(JSON.stringify(offer));
       break;
     case "offer":
       console.log("offer");
       await peers[index].setRemoteDescription(data);
       const awnser = await peers[index].createAnswer();
       await peers[index].setLocalDescription(awnser);
-      singalling.send(JSON.stringify(awnser)+`?${index}`);
+      singalling.send(JSON.stringify(awnser));
       break;
     case "answer":
       console.log("answer");
       console.log(data);
       await peers[index].setRemoteDescription(data);
+      singalling.send("ready");
       break;
     default:
       console.log("default");
@@ -92,14 +93,14 @@ function createPeer() {
   peer.addEventListener("icecandidate", function (event) {
     console.log("Got candidate:::::", event);
     if (event.candidate) {
-      singalling.send(JSON.stringify(event.candidate)+`?${index}`);
+      singalling.send(JSON.stringify(event.candidate));
     }
   });
   peer.addEventListener("iceconnectionstatechange", function (e) {
     console.log(e);
     console.log(peer.iceConnectionState);
     if (peer.iceConnectionState === "connected") {
-      singalling.send("done"+`?${index}`);
+      singalling.send("done");
       console.log(index);
       index++;
     }
