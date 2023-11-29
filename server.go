@@ -1,7 +1,6 @@
 package main
 
 import (
-	//	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -19,7 +18,6 @@ type Peers struct {
 }
 
 var peers Peers
-var ch = make(chan string)
 const MAX_CONN = 5
 
 func main() {
@@ -50,8 +48,8 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
         for i:=0; i<peers.connections; i++ {
             newIce := []string{}
             oldIce := []string{}
-            nD,oD := true, true
-            nIR,oIR := false,false
+            nD,oD := true, true //still signaling
+            nIR,oIR := false,false      //ice ready
             conn.WriteMessage(websocket.TextMessage, []byte("{\"type\":\"ready\"}"))
             for nD || oD {
                 //processing new peer msgs
@@ -115,15 +113,5 @@ func handleSignaling(w http.ResponseWriter, r *http.Request) {
         if peers.connections == MAX_CONN {
             return
         }
-        // _,msg,_ := conn.ReadMessage()
-        // log.Println("got msg")
-        // log.Println(string(msg))
-        // str := string(msg)
-        // if (str != "done" ) {
-        //     ch <- str
-        // }
-        // if (strings.Contains(str,`candidate":"",`)){
-        //     log.Println("skipped bad ice")
-        // }
     }
 }

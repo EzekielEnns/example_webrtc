@@ -65,17 +65,9 @@ singalling.addEventListener("message", async function (event) {
       console.log("default");
       if (data.candidate) {
           try{
-
             await peers[index].addIceCandidate(data);
           }catch(e) {
-        console.log(":::::::::::::::::::::::::::::ice");
-                console.log(data);
-              console.log(peers[index])
-              console.log(peers[index].connectionState)
-              console.log(peers[index].iceGatheringState)
-              console.log(peers[index].iceConnectionState)
               console.log(e)
-        console.log(":::::::::::::::::::::::::::::ice");
           }
       }
       break;
